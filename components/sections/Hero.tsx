@@ -160,7 +160,8 @@ export default function Hero() {
             {/* Hero Content */}
             <div
                 id="hero-content"
-                className="container relative z-10 pt-[clamp(180px,25vh,260px)] pb-20"
+                className="container relative z-10 pb-20"
+                style={{ paddingTop: "max(240px, 28vh)" }}
             >
                 <div style={{ width: "100%" }}>
                     <div className="flex justify-center mb-8">
