@@ -41,48 +41,70 @@ export default function Programs() {
                 }
             );
 
-            // Horizontal scroll - Only on Desktop/Laptop
-            const mm = gsap.matchMedia();
-
-            mm.add("(min-width: 1024px)", () => {
-                if (trackRef.current) {
-                    const totalWidth = trackRef.current.scrollWidth - window.innerWidth + 120;
-
-                    gsap.to(trackRef.current, {
-                        x: () => -(trackRef.current!.scrollWidth - window.innerWidth + 150),
-                        ease: "none",
+            // Smooth reveal for cards on scroll into view
+            if (trackRef.current) {
+                const cards = trackRef.current.querySelectorAll(".prog-card");
+                gsap.fromTo(
+                    cards,
+                    { opacity: 0, y: 40 },
+                    {
+                        opacity: 1, y: 0,
+                        stagger: 0.12,
+                        duration: 0.7,
+                        ease: "power3.out",
                         scrollTrigger: {
                             trigger: sectionRef.current,
-                            start: "top top",
-                            end: () => `+=${trackRef.current!.scrollWidth}`,
-                            scrub: 1.2,
-                            pin: true,
-                            anticipatePin: 1,
-                            invalidateOnRefresh: true,
-                        },
-                    });
-
-                    // Smooth reveal for cards
-                    const cards = trackRef.current.querySelectorAll(".prog-card");
-                    gsap.fromTo(
-                        cards,
-                        { opacity: 0, x: 50, filter: "blur(10px)" },
-                        {
-                            opacity: 1, x: 0, filter: "blur(0px)",
-                            stagger: 0.1,
-                            duration: 0.6,
-                            scrollTrigger: {
-                                trigger: sectionRef.current,
-                                start: "top 20%",
-                                toggleActions: "play none none reverse"
-                            }
+                            start: "top 60%",
+                            toggleActions: "play none none reverse"
                         }
-                    );
-                }
-            });
+                    }
+                );
+            }
         }, sectionRef);
 
-        return () => ctx.revert();
+        // Drag-to-scroll (only activates on click/drag, doesn't hijack page scroll)
+        const track = trackRef.current;
+        if (!track) return () => ctx.revert();
+
+        let isDown = false;
+        let startX = 0;
+        let scrollLeft = 0;
+
+        const onMouseDown = (e: MouseEvent) => {
+            isDown = true;
+            track.style.cursor = "grabbing";
+            startX = e.pageX - track.offsetLeft;
+            scrollLeft = track.scrollLeft;
+        };
+        const onMouseLeave = () => {
+            isDown = false;
+            track.style.cursor = "grab";
+        };
+        const onMouseUp = () => {
+            isDown = false;
+            track.style.cursor = "grab";
+        };
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - track.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            track.scrollLeft = scrollLeft - walk;
+        };
+
+        track.style.cursor = "grab";
+        track.addEventListener("mousedown", onMouseDown);
+        track.addEventListener("mouseleave", onMouseLeave);
+        track.addEventListener("mouseup", onMouseUp);
+        track.addEventListener("mousemove", onMouseMove);
+
+        return () => {
+            ctx.revert();
+            track.removeEventListener("mousedown", onMouseDown);
+            track.removeEventListener("mouseleave", onMouseLeave);
+            track.removeEventListener("mouseup", onMouseUp);
+            track.removeEventListener("mousemove", onMouseMove);
+        };
     }, []);
 
     return (
